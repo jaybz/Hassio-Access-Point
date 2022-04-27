@@ -25,6 +25,8 @@ WPA_PASSPHRASE=$(jq --raw-output ".wpa_passphrase" $CONFIG_PATH)
 CHANNEL=$(jq --raw-output ".channel" $CONFIG_PATH)
 ADDRESS=$(jq --raw-output ".address" $CONFIG_PATH)
 NETMASK=$(jq --raw-output ".netmask" $CONFIG_PATH)
+# set NETWORK variable via ipcalc
+eval `ipcalc -n $ADDRESS $NETMASK`
 BROADCAST=$(jq --raw-output ".broadcast" $CONFIG_PATH)
 INTERFACE=$(jq --raw-output ".interface" $CONFIG_PATH)
 HIDE_SSID=$(jq --raw-output ".hide_ssid" $CONFIG_PATH)
@@ -61,6 +63,8 @@ nmcli dev set $INTERFACE managed no
 
 logger "Run command: ip link set $INTERFACE down" 1
 ip link set $INTERFACE down
+logger "Run command: ifdown $INTERFACE -f" 1
+ifdown $INTERFACE -f
 
 logger "Add to /etc/network/interfaces: address $ADDRESS" 1
 echo "address $ADDRESS"$'\n' >> /etc/network/interfaces
@@ -68,7 +72,11 @@ logger "Add to /etc/network/interfaces: netmask $NETMASK" 1
 echo "netmask $NETMASK"$'\n' >> /etc/network/interfaces
 logger "Add to /etc/network/interfaces: broadcast $BROADCAST" 1
 echo "broadcast $BROADCAST"$'\n' >> /etc/network/interfaces
+logger "Add to /etc/network/interfaces: network $NETWORK" 1
+echo "network $NETWORK"$'\n' >> /etc/network/interfaces
 
+logger "Run command: ifup $INTERFACE -f" 1
+ifup $INTERFACE
 logger "Run command: ip link set $INTERFACE up" 1
 ip link set $INTERFACE up
 
